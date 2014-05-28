@@ -1,0 +1,38 @@
+---
+- hosts: all
+  sudo: yes
+  tasks:
+    - name: Delete imas_a static routes
+      command: "/sbin/ip route del {{ multicast_imas_a }}/32 dev {{ device_imas_a }}"
+      ignore_errors: yes
+
+    - name: Delete imas_b static routes
+      command: "/sbin/ip route del {{ multicast_imas_a }}/32 dev {{ device_imas_b }}"
+      ignore_errors: yes
+
+    - name: desinstalar iperf
+      yum: name=iperf state=removed
+
+    - name: Delete iperf rpm
+      file: path=/tmp/iperf-2.0.5-11.el6.x86_64.rpm state=absent
+
+- hosts: clients
+  sudo: yes
+  tasks:
+    - name: Stop iperf service imas_a
+      service: name={{ iperf_service_name_imas_a }} state=stopped
+
+    - name: Stop iperf service imas_b
+      service: name={{ iperf_service_name_imas_b }} state=stopped
+
+    - name: Delete iperf imas_a init.d daemon script
+      file: path=/etc/init.d/{{ iperf_service_name_imas_a }} state=absent
+
+    - name: Delete iperf imas_b init.d daemon script
+      file: path=/etc/init.d/{{ iperf_service_name_imas_b }} state=absent
+
+    - name: Delete iperf log imas_a
+      file: path=/var/log/{{ iperf_service_name_imas_a }} state=absent
+
+    - name: Delete iperf log imas_b
+      file: path=/var/log/{{ iperf_service_name_imas_b }} state=absent

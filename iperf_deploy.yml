@@ -1,0 +1,46 @@
+---
+- hosts: all
+  sudo: yes
+
+  tasks:
+    - name: Comprobar con ping
+      action: ping
+
+    - name: Add imas_a static routes
+      command: "/sbin/ip route add {{ multicast_imas_a }}/32 dev {{ device_imas_a }}"
+      ignore_errors: yes
+
+    - name: Add imas_b static routes
+      command: "/sbin/ip route add {{ multicast_imas_b }}/32 dev {{ device_imas_b }}"
+      ignore_errors: yes
+
+    #- name: Install iperf by yum
+    #  yum: name=iperf state=installed
+
+    - name: Copy iperf rpm
+      copy: src=files/iperf-2.0.5-11.el6.x86_64.rpm dest=/tmp/iperf-2.0.5-11.el6.x86_64.rpm
+
+    - name: Install iperf rpm
+      command: "/bin/rpm -Uvh /tmp/iperf-2.0.5-11.el6.x86_64.rpm"
+
+
+- hosts: clients
+  sudo: yes
+  tasks:
+    # note the other tasks on "all" hosts
+    - name: Add iperf daemon imas_a init.d eth0 script
+      template: src=templates/init.d-iperf_imas_a.j2 dest=/etc/init.d/{{ iperf_service_name_imas_a }} mode=0751
+      notify:
+        - Reiniciar iperf imas_a
+
+    - name: Añadir iperf daemon imas_b init.d eth1 script
+      template: src=templates/init.d-iperf_imas_b.j2 dest=/etc/init.d/{{ iperf_service_name_imas_b }} mode=0751
+      notify:
+        - Reiniciar iperf imas_b
+
+  handlers:
+      - name: Reiniciar iperf imas_a
+        service: name={{ iperf_service_name_imas_a }} state=restarted
+
+      - name: Reiniciar iperf imas_b
+        service: name={{ iperf_service_name_imas_b }} state=restarted

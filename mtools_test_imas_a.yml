@@ -1,0 +1,28 @@
+---
+- hosts: server
+  tasks:
+    - name: Take the date
+      local_action: shell date '+%F.%H:%M:%S'
+      register: mydate
+
+    - name: Execute iperf to emit imas_a multicast
+      command: "msend -m5000 -b5 -n500 -p8 -s1 {{ multicast_imas_a }} 5 {{ ip_imas_a }}"
+      async: 45
+      poll: 5
+
+    #- name: Execute open-mtools test
+
+- hosts: clients
+  sudo: Yes
+  tasks:
+    - name: Fetch iperf log (local directory is fetched/mtools_{{ mydate }})
+      fetch: src=/var/log/{{ mtools_service_name_imas_a }} dest=fetched/mtools_{{ mydate }}/imas_a_{{ ansible_hostname }} flat=yes
+
+    - name: Delete iperf log imas_b
+      file: path=/var/log/{{ mtools_service_name_imas_a }} state=absent
+
+    - name: Create empty iperf log imas_b
+      file: path=/var/log/{{ mtools_service_name_imas_a }} state=touch
+
+    #- name: Fetch open-mtools log
+    #  file:

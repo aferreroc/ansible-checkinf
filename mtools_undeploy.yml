@@ -1,0 +1,30 @@
+---
+- hosts: all
+  sudo: yes
+  tasks:
+    - name: desinstalar mtools
+      yum: name=open-mtools state=removed
+
+    - name: Delete iperf rpm
+      file: path=/tmp/open-mtools-1.0-1.fc20.x86_64.rpm state=absent
+
+- hosts: clients
+  sudo: yes
+  tasks:
+    - name: Stop mtools service imas_a
+      service: name={{ mdump_service_name_imas_a }} state=stopped
+
+    - name: Stop mtools service imas_b
+      service: name={{ mdump_service_name_imas_b }} state=stopped
+
+    - name: Delete mtools imas_a init.d daemon script
+      file: path=/etc/init.d/{{ mdump_service_name_imas_a }} state=absent
+
+    - name: Delete mtools imas_b init.d daemon script
+      file: path=/etc/init.d/{{ mdump_service_name_imas_b }} state=absent
+
+    - name: Delete mtools log imas_a
+      file: path=/var/log/{{ mdump_service_name_imas_a }} state=absent
+
+    - name: Delete mtools log imas_b
+      file: path=/var/log/{{ mdump_service_name_imas_b }} state=absent
