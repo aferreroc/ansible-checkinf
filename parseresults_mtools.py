@@ -5,28 +5,6 @@ import re
 
 import sys, getopt
 
-def tail(f, n, offset=None):
-    """Reads a n lines from f with an offset of offset lines.  The return
-    value is a tuple in the form ``(lines, has_more)`` where `has_more` is
-    an indicator that is `True` if there are more lines in the file.
-    """
-    avg_line_length = 74
-    to_read = n + (offset or 0)
-
-    while 1:
-        try:
-            f.seek(-(avg_line_length * to_read), 2)
-        except IOError:
-            # woops.  apparently file is smaller than what we want
-            # to step back, go to the beginning instead
-            f.seek(0)
-        pos = f.tell()
-        lines = f.read().splitlines()
-        if len(lines) >= to_read or pos == 0:
-            return lines[-to_read:offset and -offset or None], \
-                   len(lines) > to_read or pos > 0
-        avg_line_length *= 1.3
-
 
 def main(argv):
   inputpath = ''
@@ -57,7 +35,7 @@ def main(argv):
   #   ("Host", "Messages","Losts", "Result"))
 
   fout = open(outputfile, 'w')
-  fout.write("  %s\t\t  %s\t\t\t  %s\t\t%s" %
+  fout.write("  %s\t\t  %s\t\t\t  %s\t\t%s\n" %
         ("Host", "Messages","Losts", "Result"))
 
   for dirpath, dirs, files in os.walk(inputpath):
@@ -87,7 +65,7 @@ def main(argv):
             #   linea1,
             #   linea2,
             #   hayErrores))
-            fout.write("%s\t%s\t%s\t%s" %
+            fout.write("%s\t%s\t%s\t%s\n" %
                   (matchFile.group(1),
                   linea1,
                   linea2,
