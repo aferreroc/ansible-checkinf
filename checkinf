@@ -2,17 +2,26 @@
 
 #
 
-usage() { echo "Usage: $0 -t <iperf|mdump> [-b bandwith mandatory with iperf, ex 200b] -n <imas_a|imas_b>" 1>&2; exit 1; }
+usage() { echo "Usage: $0 -m <mode> -t <type> -n <network> [-b bandwith]
+  -m mode of operation, use: deploy | test | undeploy
+  -t type of multicast test, use: iperf | mdump
+  -n Network, use: imas_a | imas_b
+  -b bandwith, mandatory with iperf type, default value: 200b
+  " 1>&2; exit 1; }
 
-while getopts ":t:b:n:" o; do
+while getopts ":m:t:b:n:" o; do
     case "${o}" in
+        m)
+            m=${OPTARG}
+            [ "${m}" == "deploy" ] || [ "${m}" == "test" ] || [ "${m}" == "undeploy" ] || usage
+            ;;
         t)
             t=${OPTARG}
             [ "${t}" == "iperf" ] || [ "${t}" == "mtools" ] || usage
             ;;
         b)
             b=${OPTARG}
-            [ "${b}" == "" ] && b="200b"
+            #[ "${b}" == "" ] && b = "200b"
             ;;
         n)
             n=${OPTARG}
@@ -25,7 +34,7 @@ while getopts ":t:b:n:" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${t}" ] || [ -z "${n}" ]; then
+if  [ -z "${m}" ] || [ -z "${t}" ] || [ -z "${n}" ]; then
     usage
 fi
 
@@ -33,19 +42,51 @@ fi
 # echo "b = ${b}"
 # echo "n = ${n}"
 
-if [ "${t}" == "iperf" ] && [ "${n}" == "imas_a" ]; then
-  ansible-playbook -i hosts iperf_test_imas_a.yml --extra-vars "capacity=${b}"
+case "${m}" in
+  "deploy")
+      if [ "${t}" == "iperf" ]; then
+        echo Executing: ansible-playbook -i hosts iperf_deploy.yml
+        ansible-playbook -i hosts iperf_deploy.yml
+      elif [ "${t}" == "mtools" ]; then
+        echo ansible-playbook -i hosts mtools_deploy.yml
+        ansible-playbook -i hosts mtools_deploy.yml
+      else
+        echo "selection fail"
+        usage
+      fi
+      ;;
+  "undeploy")
+    if [ "${t}" == "iperf" ]; then
+      echo Executing: ansible-playbook -i hosts iperf_undeploy.yml
+      ansible-playbook -i hosts iperf_undeploy.yml
+    elif [ "${t}" == "mtools" ]; then
+      echo Executing: ansible-playbook -i hosts mtools_undeploy.yml
+      ansible-playbook -i hosts mtools_undeploy.yml
+    else
+      echo "selection fail"
+      usage
+    fi
+    ;;
+  "test")
+    if [ -z "${b}" ] || [ "${b}" == "" ]; then
+      b="200b"
+    fi
 
-elif [ "${t}" == "iperf" ] && [ "${n}" == "imas_b" ]; then
-  ansible-playbook -i hosts iperf_test_imas_b.yml --extra-vars "capacity=${b}"
-
-elif [ "${t}" == "mtools" ] && [ "${n}" == "imas_a" ]; then
-  ansible-playbook -i hosts mtools_test_imas_a.yml
-
-elif [ "${t}" == "mtools" ] && [ "${n}" == "imas_b" ]; then
-  ansible-playbook -i hosts mtools_test_imas_b.yml
-
-else
-  echo "selection fail"
-  usage
-fi
+    if [ "${t}" == "iperf" ] && [ "${n}" == "imas_a" ]; then
+      echo Executing: ansible-playbook -i hosts iperf_test_imas_a.yml --extra-vars "capacity=${b}"
+      ansible-playbook -i hosts iperf_test_imas_a.yml --extra-vars "capacity=${b}"
+    elif [ "${t}" == "iperf" ] && [ "${n}" == "imas_b" ]; then
+      echo Executing: ansible-playbook -i hosts iperf_test_imas_b.yml --extra-vars "capacity=${b}"
+      ansible-playbook -i hosts iperf_test_imas_b.yml --extra-vars "capacity=${b}"
+    elif [ "${t}" == "mtools" ] && [ "${n}" == "imas_a" ]; then
+      echo Executing: ansible-playbook -i hosts mtools_test_imas_a.yml
+      ansible-playbook -i hosts mtools_test_imas_a.yml
+    elif [ "${t}" == "mtools" ] && [ "${n}" == "imas_b" ]; then
+      echo Executing: ansible-playbook -i hosts mtools_test_imas_b.yml
+      ansible-playbook -i hosts mtools_test_imas_b.yml
+    else
+      echo "selection fail"
+      usage
+    fi
+    ;;
+esac
