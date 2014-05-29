@@ -2,13 +2,15 @@
 # Variables generales
 device_imas_a: "{{ ansible_eth0.device }}"
 device_imas_b: "{{ ansible_eth1.device }}"
-ip_imas_a: "{{ ansible_eth0.ipv4 }}"
-ip_imas_b: "{{ ansible_eth1.ipv4 }}"
-multicast_imas_a: 226.1.1.1
-multicast_imas_b: 226.1.1.2
-multicastport: 2534
+ip_imas_a: "{{ ansible_eth0.ipv4.address }}"
+ip_imas_b: "{{ ansible_eth1.ipv4.address }}"
+
+
 
 # Variables para el demonio de iperf
+iperf_multicast_imas_a: 226.1.1.1
+iperf_multicast_imas_b: 226.1.1.2
+
 iperf_daemon: /usr/bin/iperf
 
 iperf_daemon_opts_imas_a: "-s -u -B {{ multicast_imas_a }} -l 50k -xCMSV"
@@ -18,10 +20,13 @@ iperf_daemon_opts_imas_b: "-s -u -B {{ multicast_imas_b }} -l 50k -xCMSV"
 iperf_service_name_imas_b: iperf_"{{ device_imas_b }}"
 
 # Variables para el demonio de opem-mtools mdump
+mdump_multicast_imas_a: 226.1.1.1
+mdump_multicast_imas_b: 226.1.1.2
+mdump_multicastport: 2534
 mdump_daemon: /usr/bin/mdump
 
-mdump_daemon_opts_imas_a: "-v -Q2 {{ multicast_imas_a }} {{ multicastport }} {{ ip_imas_a }}"
+mdump_daemon_opts_imas_a: "-v -Q2 {{ mdump_multicast_imas_a }} {{ mdump_multicastport }} {{ ip_imas_a }}"
 mdump_service_name_imas_a: mdump_"{{ device_imas_a }}"
 
-mdump_daemon_opts_imas_b: "-v -Q2 {{ multicast_imas_b }} {{ multicastport }} {{ ip_imas_b }}"
+mdump_daemon_opts_imas_b: "-v -Q2 {{ mdump_multicast_imas_b }} {{ mdump_multicastport }} {{ ip_imas_b }}"
 mdump_service_name_imas_a: mdump_"{{ device_imas_b }}"

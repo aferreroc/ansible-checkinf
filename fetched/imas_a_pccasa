@@ -1,5 +1,0 @@
-[ ID] Interval       Transfer     Bandwidth        Jitter   Lost/Total Datagrams
-[  3]  0.0- 6.7 sec   850 KBytes  1.03 Mbits/sec  705.316 ms    2/   19 (11%)
-[  3]  0.0- 6.7 sec  1 datagrams received out-of-order
-[  6]  0.0- 7.4 sec   700 KBytes   777 Kbits/sec  598.361 ms    1/   14 (7.1%)
-[  6]  0.0- 7.4 sec  1 datagrams received out-of-order

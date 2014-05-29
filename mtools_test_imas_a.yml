@@ -6,11 +6,9 @@
       register: mydate
 
     - name: Execute iperf to emit imas_a multicast
-      command: "msend -m5000 -b5 -n500 -p8 -s1 {{ multicast_imas_a }} 5 {{ ip_imas_a }}"
+      command: "msend -m5000 -b5 -n500 -p8 -s1 {{ mdump_multicast_imas_a }} {{ mdump_multicastport }} 5 {{ ip_imas_a }}"
       async: 45
       poll: 5
-
-    #- name: Execute open-mtools test
 
 - hosts: clients
   sudo: Yes
@@ -24,5 +22,6 @@
     - name: Create empty iperf log imas_b
       file: path=/var/log/{{ mtools_service_name_imas_a }} state=touch
 
-    #- name: Fetch open-mtools log
-    #  file:
+  post_tasks:
+    - name: "Display a results of logs "
+      local_action: shell "parseresults_mtools.py -t imas_a -i fetched/mtools_{{ mydate }} -o fetched/Summary_mtools_imas_a_{{ mydate }}.txt

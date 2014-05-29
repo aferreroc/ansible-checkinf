@@ -1,0 +1,51 @@
+#!/bin/bash
+
+#
+
+usage() { echo "Usage: $0 -t <iperf|mdump> [-b bandwith mandatory with iperf, ex 200b] -n <imas_a|imas_b>" 1>&2; exit 1; }
+
+while getopts ":t:b:n:" o; do
+    case "${o}" in
+        t)
+            t=${OPTARG}
+            [ "${t}" == "iperf" ] || [ "${t}" == "mtools" ] || usage
+            ;;
+        b)
+            b=${OPTARG}
+            [ "${b}" == "" ] && b="200b"
+            ;;
+        n)
+            n=${OPTARG}
+            [ "${n}" == "imas_a" ] || [ "${n}" == "imas_b" ] || usage
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+if [ -z "${t}" ] || [ -z "${n}" ]; then
+    usage
+fi
+
+# echo "t = ${t}"
+# echo "b = ${b}"
+# echo "n = ${n}"
+
+if [ "${t}" == "iperf" ] && [ "${n}" == "imas_a" ]; then
+  ansible-playbook -i hosts iperf_test_imas_a.yml --extra-vars "capacity=${b}"
+
+elif [ "${t}" == "iperf" ] && [ "${n}" == "imas_b" ]; then
+  ansible-playbook -i hosts iperf_test_imas_b.yml --extra-vars "capacity=${b}"
+
+elif [ "${t}" == "mtools" ] && [ "${n}" == "imas_a" ]; then
+  ansible-playbook -i hosts mtools_test_imas_a.yml
+
+elif [ "${t}" == "mtools" ] && [ "${n}" == "imas_b" ]; then
+  ansible-playbook -i hosts mtools_test_imas_b.yml
+
+else
+  echo "selection fail"
+  usage
+fi

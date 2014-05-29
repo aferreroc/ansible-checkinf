@@ -6,18 +6,23 @@
       register: mydate
 
     - name: Execute iperf to emit imas_b multicast
-      command: "iperf -u -c {{ multicast_imas_b }} -b 200m -l 50k -t 30"
+      command: "iperf -u -c {{ multicast_imas_b }} -b {{ capacity }} -l 50k -t 30"
       async: 45
       poll: 5
+
 
 - hosts: clients
   sudo: Yes
   tasks:
     - name: Fetch iperf log (local directory is fetched/iperf_{{ mydate }})
-      fetch: src=/var/log/{{ iperf_service_name_imas_b }} dest=fetched_{{ mydate }}/imas_b_{{ ansible_hostname }} flat=yes
+      fetch: src=/var/log/{{ iperf_service_name_imas_b }} dest=fetched/iperf_{{ mydate }}/imas_b_{{ ansible_hostname }} flat=yes
 
     - name: Delete iperf log imas_b
       file: path=/var/log/{{ iperf_service_name_imas_b }} state=absent
 
     - name: Create empty iperf log imas_b
       file: path=/var/log/{{ iperf_service_name_imas_b }} state=touch
+
+  post_tasks:
+    - name: "Display a results of logs "
+      local_action: shell "parseresults_iperf.py -t imas_b -i fetched/iperf_{{ mydate }} -o fetched/Summary_iperf_imas_b_{{ mydate }}.txt

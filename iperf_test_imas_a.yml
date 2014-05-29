@@ -6,7 +6,7 @@
       register: mydate
 
     - name: Execute iperf to emit imas_a multicast
-      command: "iperf -u -c {{ multicast_imas_a }} -b 200m -l 50k -t 30"
+      command: "iperf -u -c {{ multicast_imas_a }} -b {{ capacity }} -l 50k -t 30"
       async: 45
       poll: 5
 
@@ -23,5 +23,6 @@
     - name: Create empty iperf log imas_a
       file: path=/var/log/{{ iperf_service_name_imas_a }} state=touch
 
-  #post_tasks:
-    #- name: "Display a results of logs"
+  post_tasks:
+    - name: "Display a results of logs "
+      local_action: shell "parseresults_iperf.py -t imas_a -i fetched/iperf_{{ mydate }} -o fetched/Summary_iperf_imas_a_{{ mydate }}.txt
