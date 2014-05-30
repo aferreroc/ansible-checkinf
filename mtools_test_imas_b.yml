@@ -2,7 +2,7 @@
 - hosts: server
   tasks:
     - name: Execute iperf to emit imas_a multicast
-      command: "msend -m5000 -b5 -n500 -p8 -s1 {{ mdump_multicast_imas_b }} {{ mdump_multicastport }} 5 {{ ip_imas_b }}"
+      command: "msend -m50000 -b5 -n500 -p8 -s1 {{ mdump_multicast_imas_b }} {{ mdump_multicastport }} 5 {{ ip_imas_b }}"
       async: 45
       poll: 5
 
