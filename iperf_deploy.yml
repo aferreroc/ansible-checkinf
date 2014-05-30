@@ -7,11 +7,11 @@
       action: ping
 
     - name: Add imas_a static routes
-      command: "/sbin/ip route add {{ multicast_imas_a }}/32 dev {{ device_imas_a }}"
+      command: "/sbin/ip route add {{ iperf_multicast_imas_a }}/32 dev {{ device_imas_a }}"
       ignore_errors: yes
 
     - name: Add imas_b static routes
-      command: "/sbin/ip route add {{ multicast_imas_b }}/32 dev {{ device_imas_b }}"
+      command: "/sbin/ip route add {{ iperf_multicast_imas_b }}/32 dev {{ device_imas_b }}"
       ignore_errors: yes
 
     #- name: Install iperf by yum

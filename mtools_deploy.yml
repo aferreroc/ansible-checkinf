@@ -5,11 +5,11 @@
     - name: Comprobar con ping
       action: ping
 
-    # - name: Copy mtools rpm
-    #   copy: src=files/open-mtools-1.0-1.fc20.x86_64.rpm dest=/tmp/open-mtools-1.0-1.fc20.x86_64.rpm
-    #
-    # - name: Install mtools rpm
-    #   command: "/bin/rpm -Uvh /tmp/open-mtools-1.0-1.fc20.x86_64.rpm"
+    - name: Copy mtools rpm
+      copy: src=files/open-mtools-1.0-1.fc20.x86_64.rpm dest=/tmp/open-mtools-1.0-1.fc20.x86_64.rpm
+    
+    - name: Install mtools rpm
+      command: "/bin/rpm -Uvh /tmp/open-mtools-1.0-1.fc20.x86_64.rpm"
 
 
 - hosts: clients
@@ -30,5 +30,5 @@
       - name: Reiniciar mtools imas_a
         service: name={{ mdump_service_name_imas_a }} state=restarted
 
-      - name: Reiniciar iperf imas_b
+      - name: Reiniciar mtools imas_b
         service: name={{ mdump_service_name_imas_b }} state=restarted

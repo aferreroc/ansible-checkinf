@@ -1,27 +1,33 @@
 ---
 - hosts: server
   tasks:
-    - name: Take the date
-      local_action: shell date '+%F.%H:%M:%S'
-      register: mydate
-
-    - name: Execute iperf to emit imas_a multicast
+    - name: Execute msend to emit imas_a multicast
       command: "msend -m5000 -b5 -n500 -p8 -s1 {{ mdump_multicast_imas_a }} {{ mdump_multicastport }} 5 {{ ip_imas_a }}"
       async: 45
       poll: 5
 
 - hosts: clients
   sudo: Yes
+  pre_tasks:
+    - name: Take the date
+      local_action: shell date '+%F.%H:%M:%S'
+      register: mydate
+ 
+    - debug: var=mydate.stdout
+
   tasks:
-    - name: Fetch iperf log (local directory is fetched/mtools_{{ mydate }})
-      fetch: src=/var/log/{{ mtools_service_name_imas_a }} dest=fetched/mtools_{{ mydate }}/imas_a_{{ ansible_hostname }} flat=yes
+    - name: Fetch iperf log (local directory is fetched/mtools_date)
+      fetch: src=/var/log/{{ mdump_service_name_imas_a }} dest=fetched/mtools_imas_a_{{ mydate.stdout }}/imas_a_{{ ansible_hostname }} flat=yes
 
-    - name: Delete iperf log imas_b
-      file: path=/var/log/{{ mtools_service_name_imas_a }} state=absent
-
-    - name: Create empty iperf log imas_b
-      file: path=/var/log/{{ mtools_service_name_imas_a }} state=touch
+    - name: Delete iperf log imas_a
+      file: path=/var/log/{{ mdump_service_name_imas_a }} state=absent
+      notify: Reiniciar mtools imas_a
 
   post_tasks:
-    - name: "Display a results of logs "
-      local_action: shell "parseresults_mtools.py -t imas_a -i fetched/mtools_{{ mydate }} -o fetched/Summary_mtools_imas_a_{{ mydate }}.txt
+    - name: Create Summary of imas_a logs 
+      local_action: command ./parseresults_mtools.py -t imas_a -i fetched/mtools_imas_a_{{ mydate.stdout }} -o fetched/Summary_mtools_imas_a_{{ mydate.stdout }}.txt
+
+  handlers:
+    - name: Reiniciar mtools imas_a
+      service: name={{ mdump_service_name_imas_a }} state=restarted
+

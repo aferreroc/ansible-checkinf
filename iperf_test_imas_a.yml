@@ -1,28 +1,34 @@
 ---
 - hosts: server
   tasks:
-    - name: Take the date
-      local_action: shell date '+%F.%H:%M:%S'
-      register: mydate
-
     - name: Execute iperf to emit imas_a multicast
-      command: "iperf -u -c {{ multicast_imas_a }} -b {{ capacity }} -l 50k -t 30"
+      command: "iperf -u -c {{ iperf_multicast_imas_a }} -b {{ capacity }} -l 50k -t 30"
       async: 45
       poll: 5
 
 
 - hosts: clients
   sudo: Yes
+  pre_tasks:
+    - name: Take the date
+      local_action: shell date '+%F.%H:%M:%S'
+      register: mydate
+
+    - debug: var=mydate.stdout
+
   tasks:
-    - name: Fetch iperf log (local directory is fetched/iperf_{{ mydate }})
-      fetch: src=/var/log/{{ iperf_service_name_imas_a }} dest=fetched/iperf_{{ mydate }}/imas_a_{{ ansible_hostname }} flat=yes
+    - name: Fetch iperf log (local directory is fetched/iperf_date)
+      fetch: src=/var/log/{{ iperf_service_name_imas_a }} dest=fetched/iperf_imas_a_{{ mydate.stdout }}/imas_a_{{ ansible_hostname }} flat=yes
 
     - name: Delete iperf log imas_a
       file: path=/var/log/{{ iperf_service_name_imas_a }} state=absent
-
-    - name: Create empty iperf log imas_a
-      file: path=/var/log/{{ iperf_service_name_imas_a }} state=touch
+      notify:
+        - Reiniciar iperf imas_a
 
   post_tasks:
-    - name: "Display a results of logs "
-      local_action: shell "parseresults_iperf.py -t imas_a -i fetched/iperf_{{ mydate }} -o fetched/Summary_iperf_imas_a_{{ mydate }}.txt
+    - name: Creates a Summary of logs
+      local_action: command ./parseresults_iperf.py -t imas_a -i $PWD/fetched/iperf_imas_a_{{ mydate.stdout }} -o $PWD/fetched/Summary_iperf_imas_a_{{ mydate.stdout }}.txt
+
+  handlers:
+      - name: Reiniciar iperf imas_a
+        service: name={{ iperf_service_name_imas_a }} state=restarted

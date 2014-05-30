@@ -65,7 +65,7 @@ def main(argv):
             #   linea1,
             #   linea2,
             #   hayErrores))
-            fout.write("%s\t%s\t%s\t%s\n" %
+            fout.write("%s\t%s\t%s\t\t%s\n" %
                   (matchFile.group(1),
                   linea1,
                   linea2,
