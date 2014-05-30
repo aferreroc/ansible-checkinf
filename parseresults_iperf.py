@@ -50,7 +50,7 @@ def main(argv):
           if matchFile and matchObj:
             errores = float(matchObj.group(5))
             hayErrores = "OK"
-            if errores > 0:
+            if errores > 0.1:
               hayErrores = "ERROR !!!"
 
             # print("%s %s %s\t%s %s  (%s%s)\t%s" %
