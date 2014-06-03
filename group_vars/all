@@ -4,8 +4,8 @@ device_imas_a: "{{ ansible_eth0.device }}"
 device_imas_b: "{{ ansible_eth1.device }}"
 ip_imas_a: "{{ ansible_eth0.ipv4.address }}"
 ip_imas_b: "{{ ansible_eth1.ipv4.address }}"
-
-
+env:
+  mydate: ""
 
 # Variables para el demonio de iperf
 iperf_multicast_imas_a: 226.1.1.1

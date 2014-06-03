@@ -1,23 +1,19 @@
 ---
 - hosts: server
+  pre_tasks:
+    - local_action: shell export mydate=`date '+%F.%H:%M:%S'`
+
   tasks:
-    - name: Execute iperf to emit imas_a multicast
+    - name: Execute msend to emit imas_a multicast
       command: "msend -m50000 -b5 -n500 -p8 -s1 {{ mdump_multicast_imas_b }} {{ mdump_multicastport }} 5 {{ ip_imas_b }}"
       async: 45
       poll: 5
 
 - hosts: clients
   sudo: Yes
-  pre_tasks:
-    - name: Take the date
-      local_action: shell date '+%F.%H:%M:%S'
-      register: mydate
-
-    - debug: var=mydate.stdout
-
   tasks:
     - name: Fetch iperf log (local directory is fetched/mtools_date)
-      fetch: src=/var/log/{{ mdump_service_name_imas_b }} dest=fetched/mtools_imas_b_{{ mydate.stdout }}/imas_b_{{ ansible_hostname }} flat=yes
+      fetch: src=/var/log/{{ mdump_service_name_imas_b }} dest=fetched/mtools_imas_b_{{ lookup('env','mydate') }}/imas_b_{{ ansible_hostname }} flat=yes
 
     - name: Delete iperf log imas_b
       file: path=/var/log/{{ mdump_service_name_imas_b }} state=absent
@@ -25,7 +21,7 @@
 
   post_tasks:
     - name: Create Summary of imas_b logs
-      local_action: command ./parseresults_mtools.py -t imas_b -i fetched/mtools_imas_b_{{ mydate.stdout }} -o fetched/Summary_mtools_imas_b_{{ mydate.stdout }}.txt
+      local_action: command ./parseresults_mtools.py -t imas_b -i fetched/mtools_imas_b_{{ lookup('env','mydate') }} -o fetched/Summary_mtools_imas_b_{{ lookup('env','mydate') }}.txt
 
   handlers:
     - name: Reiniciar mtools imas_b

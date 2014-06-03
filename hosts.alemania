@@ -1,5 +1,7 @@
 [server]
-fdp4b
+#fdp4b
+10.200.80.215 ansible_connection=ssh ansible_ssh_user=nor ansible_ssh_pass=goteras
 
 [clients]
-cwp4b
+#icwp4b
+10.200.80.174 ansible_connection=ssh ansible_ssh_user=nor ansible_ssh_pass=goteras
