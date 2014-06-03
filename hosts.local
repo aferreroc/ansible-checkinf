@@ -1,5 +1,0 @@
-[server]
-192.168.122.214 ansible_connection=ssh ansible_ssh_user=ansible ansible_ssh_pass=ansible
-
-[clients]
-192.168.122.214 ansible_connection=ssh ansible_ssh_user=ansible ansible_ssh_pass=ansible
