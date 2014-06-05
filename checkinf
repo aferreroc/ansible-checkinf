@@ -2,14 +2,19 @@
 
 #
 
-usage() { echo "Usage: $0 -m <mode> -t <type> -n <network> [-b bandwith]
+usage() { echo "Usage:
+$0 -m <mode> -t <type> -n <network> [-b bandwith]
   -m mode of operation, use: deploy | test | undeploy
   -t type of multicast test, use: iperf | mtools
   -n Network, use: imas_a | imas_b
   -b bandwith, mandatory with iperf type, default value: 200m
+
+$0 -c <checktype> -i <interface>
+  -c check type, use: summaryinfo | counters
+  -i interfaz name
   " 1>&2; exit 1; }
 
-while getopts ":m:t:b:n:" o; do
+while getopts ":m:t:b:n:c:i:" o; do
     case "${o}" in
         m)
             m=${OPTARG}
@@ -27,6 +32,14 @@ while getopts ":m:t:b:n:" o; do
             n=${OPTARG}
             [ "${n}" == "imas_a" ] || [ "${n}" == "imas_b" ] || usage
             ;;
+        c)
+            c=${OPTARG}
+            [ "${c}" == "summaryinfo" ] || [ "${c}" == "counters" ] || usage
+            ;;
+        i)
+            i=${OPTARG}
+            [ -n "${i}" ] || usage
+            ;;
         *)
             usage
             ;;
@@ -34,10 +47,14 @@ while getopts ":m:t:b:n:" o; do
 done
 shift $((OPTIND-1))
 
-if  [ -z "${m}" ] || [ -z "${t}" ]; then
-    usage
+
+if [[ (-z "${m}" || -z "${t}") && (-z "${c}" || -z "${i}") ]]; then
+  echo "selection not valid"
+  usage
 fi
 
+
+mydate=$(date '+%F.%H:%M:%S')
 # echo "t = ${t}"
 # echo "b = ${b}"
 # echo "n = ${n}"
@@ -73,19 +90,46 @@ case "${m}" in
     fi
 
     if [ "${t}" == "iperf" ] && [ "${n}" == "imas_a" ]; then
-      echo Executing: ansible-playbook -i hosts iperf_test_imas_a.yml --extra-vars "capacity=${b}"
-      ansible-playbook -i hosts iperf_test_imas_a.yml --extra-vars "capacity=${b}"
+      echo 'Executing: ansible-playbook -i hosts iperf_test_imas_a.yml --extra-vars "capacity='${b}' mydate='${mydate}'"'
+      ansible-playbook -i hosts iperf_test_imas_a.yml --extra-vars "capacity=${b} mydate=${mydate}"
+      ./parseresults_iperf.py -t imas_a -i fetched/iperf_imas_a_${mydate} -o fetched/Summary_iperf_imas_a_${mydate}.txt
     elif [ "${t}" == "iperf" ] && [ "${n}" == "imas_b" ]; then
-      echo Executing: ansible-playbook -i hosts iperf_test_imas_b.yml --extra-vars "capacity=${b}"
-      ansible-playbook -i hosts iperf_test_imas_b.yml --extra-vars "capacity=${b}"
+      echo 'Executing: ansible-playbook -i hosts iperf_test_imas_b.yml --extra-vars "capacity='${b}' mydate='${mydate}'"'
+      ansible-playbook -i hosts iperf_test_imas_b.yml --extra-vars "capacity=${b} mydate=${mydate}"
+      ./parseresults_iperf.py -t imas_b -i fetched/iperf_imas_b_${mydate} -o fetched/Summary_iperf_imas_b_${mydate}.txt
     elif [ "${t}" == "mtools" ] && [ "${n}" == "imas_a" ]; then
-      echo Executing: ansible-playbook -i hosts mtools_test_imas_a.yml
-      ansible-playbook -i hosts mtools_test_imas_a.yml
+      echo 'Executing: ansible-playbook -i hosts mtools_test_imas_a.yml --extra-vars "capacity='${b}' mydate='${mydate}'"'
+      ansible-playbook -i hosts mtools_test_imas_a.yml --extra-vars "mydate=${mydate}"
+      ./parseresults_mtools.py -t imas_a -i fetched/mtools_imas_a_${mydate} -o fetched/Summary_mtools_imas_a_${mydate}.txt
     elif [ "${t}" == "mtools" ] && [ "${n}" == "imas_b" ]; then
-      echo Executing: ansible-playbook -i hosts mtools_test_imas_b.yml
-      ansible-playbook -i hosts mtools_test_imas_b.yml
+      echo 'Executing: ansible-playbook -i hosts mtools_test_imas_b.yml --extra-vars "capacity='${b}' mydate='${mydate}'"'
+      ansible-playbook -i hosts mtools_test_imas_b.yml --extra-vars "mydate=${mydate}"
+      ./parseresults_mtools.py -t imas_b -i fetched/mtools_imas_b_${mydate} -o fetched/Summary_mtools_imas_b_${mydate}.txt
     else
       echo "selection fail"
+      usage
+    fi
+    ;;
+esac
+
+case "${c}" in
+  "summaryinfo")
+    if [ -n "${i}" ]; then
+      echo 'Executing: ansible-playbook -i hosts hw.yml --extra-vars "iface='${i}' mydate='${mydate}'"'
+      ansible-playbook -i hosts hw.yml --extra-vars "iface=${i} mydate=${mydate}"
+      ./parseresults_hw.py -t ${i} -i fetched/hw_${mydate} -o fetched/Summary_HW_${i}_${mydate}.txt
+    else
+      echo "fail, interface is empty"
+      usage
+    fi
+    ;;
+  "counters")
+    if [ -n "${i}" ]; then
+      echo 'Executing: ansible-playbook -i hosts counters.yml --extra-vars "iface='${i}' mydate='${mydate}'"'
+      ansible-playbook -i hosts counters.yml --extra-vars "iface=${i} mydate=${mydate}"
+      ./parseresults_counters.py -t ${i} -i fetched/counters_${mydate} -o fetched/Summary_counters_${i}_${mydate}.txt
+    else
+      echo "fail, interface is empty"
       usage
     fi
     ;;

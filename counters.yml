@@ -1,0 +1,34 @@
+# Salida:
+#<nombre_maquina>        <errores_paquetes_UDP>(primer punto)    <errores RX>(punto 2)   <paquetes dropped>(punto 2)             <paquetes_descartados>(punto 3)
+
+---
+- hosts: clients
+  sudo: Yes
+  tasks:
+    - name: Execute netsat -su
+      shell: netstat -su | grep -A 3 'Udp:' | awk '/errors/ {printf "host={{ ansible_hostname }} udp_errors=%s ", $1}' > /var/log/counters_{{ iface }}
+
+    - name: Execute netsat -Iiface
+      shell: netstat -I={{ iface }} | awk '
+          BEGIN {a=b=" "}
+          /{{ iface }}/ {a=$4; b=$5};
+          END {printf "RX-ERR=%s RX-DRP=%s ",a,b}
+        ' >> /var/log/counters_{{ iface }}
+
+    - name: Execute netsat -Iiface
+      shell: ethtool -S {{ iface }} | awk '
+          BEGIN {a=b=" "}
+          /rx_discards/ {a=$2}
+          /rx_fw_discards/ {b=$2};
+          END {printf "rx_discards=%s rx_fw_discards=%s\n",a,b}
+        ' >> /var/log/counters_{{ iface }}
+
+    - name: Fetch summary data to local directory
+      fetch: src=/var/log/counters_{{ iface }} dest=fetched/counters_{{ mydate }}/{{ ansible_hostname }}_{{ iface }} flat=yes
+
+    - name: Delete remote sumary data
+      file: path=/var/log/counters_{{ iface }} state=absent
+
+  # post_tasks:
+  #   - name: Create Summary of counters logs
+  #     local_action: command ./parseresults_counters.py -i fetched/counters_{{ mydate }} -o fetched/Summary_Counters_{{ mydate }}_{{ iface }}.txt
