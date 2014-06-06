@@ -1,0 +1,246 @@
+#!/usr/bin/perl -w
+
+# Developer: Bernardo Villalonga Correa
+# e-mail:    bvillalonga@indra.es
+#
+# check_net_and_kill_if_many_drops: analyze eth0 and eth1 network interfaces; if
+# drops are higher than 0.1% in eth0 or eth1 and at least in one direction, kill
+# the subsystem air traffic control application (then, sleep 60 seconds and
+# start again). STDOUT and STDERR will be redirected to *.std* files.
+
+use strict;
+use utf8;
+use FindBin;
+use Getopt::Long qw(:config no_ignore_case bundling);
+
+
+&main;
+
+
+###############
+# Subroutines #
+###############
+
+
+sub main
+{
+  # Constants
+  my $file     = '/proc/net/dev';
+  my $pctLimit = 0.1;
+  my $interval = 10;
+
+  # Variables
+  my $cwd      = $FindBin::Bin;
+  my $stdout   = "$FindBin::Script.stdout";
+  my $stderr   = "$FindBin::Script.stderr";
+  my $hOption;
+  my $iOption = $interval;
+  my %interfaces;
+  my $output;
+  my $firstDropsDump = 1;
+
+  # Change directory to this executable code's location and check if writable
+  chdir $cwd
+    or die "Cannot change dir '$cwd': $!";
+  &error("The directory '$cwd' is not writable")    if !-w $cwd;
+
+  # Parse Options
+  GetOptions('h!'         => \$hOption,
+             'help!'      => \$hOption,
+             'i=i'        => \$iOption,
+             'interval=i' => \$iOption,
+             ) or &error('type -h for help');
+  &usage    if $hOption;
+
+  # Redirect stdout and stderr to files
+  open STDOUT, '>', "$stdout"
+    or die "Cannot redirect STDOUT to '$stdout': $!";
+  open STDERR, '>', "$stderr"
+    or die "Cannot redirect STDERR to '$stderr': $!";
+
+  # Start the main loop
+  for (;;)
+  {
+    $output = &checkNetDrops($file, $pctLimit, \%interfaces);
+
+    # If net drops over $pctLimit, dump the output and kill this subsystem
+    if (defined $output)
+    {
+      my ($sec, $min, $hour, $day, $mon, $year) = gmtime;
+      my $nowString = sprintf '%d%02d%02d %02d:%02d:%02d',
+                              $year+1900, $mon+1, $day, $hour, $min, $sec;
+      my $stdoutCopy;
+
+      # Dump the output to STDOUT (which is redirect to $stdout)
+      if ($firstDropsDump)
+      {
+        print "Interval time: $iOption seconds\n";
+
+        $firstDropsDump = 0;
+      }
+      print "\n",
+            "\n",
+            "Time stamp: $nowString\n",
+            "\n";
+      print $output;
+
+      # Kill this subsystem
+      system ('(killall.sh -a; ipcrmall) > /dev/null 2>&1');
+
+      # Sleep 1min after the killall.sh
+      sleep 60;
+
+      # Undefine the interfaces hash to initialize it again
+      undef %interfaces;
+    } else
+    {
+      sleep $iOption;
+    }
+  }
+}
+
+
+sub error
+{
+  my $text = shift;
+
+  print STDERR "ERROR: $text\n";
+  exit 1;
+}
+
+
+sub usage
+{
+  my $help =<<EOF;
+
+Analyze eth0 and eth1 network interfaces; if drops are higher than 0.1% in eth0
+or eth1 and at least in one direction, kill the subsystem air traffic control
+application (then, sleep 60 seconds and start again). STDOUT and STDERR will be
+redirected to *.std* files.
+
+usage: check_net_and_kill_if_many_drops [options]
+  Optional:
+  -i, --interval    time        Interval time in seconds (default: 10)
+
+Help:
+  -h, --help                    Print this text.
+
+EOF
+
+  print STDERR $help;
+  exit 1;
+}
+
+
+sub checkNetDrops
+{
+  my $file       = shift;
+  my $pctLimit   = shift;
+  my $interfaces = shift;
+
+  my $title = sprintf 'Interface | '   .
+                      'Rx: '           .
+                      'packets '       .
+                      'drops '         .
+                      'drops/packets ' .
+                      '| '             .
+                      'Tx: '           .
+                      'packets '       .
+                      'drops '         .
+                      'drops/packets'  .
+                      "\n"             .
+                      '----------|-'   .
+                      '----'           .
+                      '--------'       .
+                      '------'         .
+                      '--------------' .
+                      '|-'             .
+                      '----'           .
+                      '--------'       .
+                      '------'         .
+                      '-------------'  .
+                      "\n";
+  my %nowInterfaces;
+  my $output;
+
+  open my $fh, '<', $file
+    or die "Cannot open '$file': $!";
+
+  while ( <$fh> )
+  {
+    chomp;
+
+    if ( /\s*(eth[01]):(.*)/ )
+    {
+      my $interface = $1;
+      my @array = split " ", $2;
+
+      if (exists $interfaces->{$interface})
+      {
+        my $packetsReceive      = $array[1];
+        my $dropReceive         = $array[3];
+        my $packetsTransmit     = $array[9];
+        my $dropTransmit        = $array[11];
+
+        my $packetsReceiveDiff  = $packetsReceive  -
+                                  $interfaces->{$interface}{Receive}{packets};
+        my $dropReceiveDiff     = $dropReceive     -
+                                  $interfaces->{$interface}{Receive}{drop};
+        my $packetsTransmitDiff = $packetsTransmit -
+                                  $interfaces->{$interface}{Transmit}{packets};
+        my $dropTransmitDiff    = $dropTransmit    -
+                                  $interfaces->{$interface}{Transmit}{drop};
+
+        my $pctReceive          = $packetsReceiveDiff  == 0 ? 0 : 100 *
+                                  $dropReceiveDiff  / $packetsReceiveDiff;
+        my $pctTransmit         = $packetsTransmitDiff == 0 ? 0 : 100 *
+                                  $dropTransmitDiff / $packetsTransmitDiff;
+
+        $nowInterfaces{$interface}{Receive}{packets}  = $packetsReceive;
+        $nowInterfaces{$interface}{Receive}{drop}     = $dropReceive;
+        $nowInterfaces{$interface}{Transmit}{packets} = $packetsTransmit;
+        $nowInterfaces{$interface}{Transmit}{drop}    = $dropTransmit;
+
+        # Update $output only if 1000 samples at least for one direction (we are
+        # using perthousands)
+        if ( ($packetsReceiveDiff  >= 1000) && ($pctReceive  > $pctLimit) ||
+             ($packetsTransmitDiff >= 1000) && ($pctTransmit > $pctLimit) )
+        {
+          $output .= sprintf '%-9s '      .
+                             '| '         .
+                             '    '       .
+                             '%-7d '      .
+                             '%-5d '      .
+                             '%%%-12.2f ' .
+                             '| '         .
+                             '    '       .
+                             '%-7d '      .
+                             '%-5d '      .
+                             '%%%-12.2f'  .
+                             "\n",
+                             $interface,
+                             $packetsReceiveDiff,
+                             $dropReceiveDiff,
+                             $pctReceive,
+                             $packetsTransmitDiff,
+                             $dropTransmitDiff,
+                             $pctTransmit;
+        }
+      } else
+      {
+        $nowInterfaces{$interface}{Receive}{packets}  = $array[1];
+        $nowInterfaces{$interface}{Receive}{drop}     = $array[3];
+        $nowInterfaces{$interface}{Transmit}{packets} = $array[9];
+        $nowInterfaces{$interface}{Transmit}{drop}    = $array[11];
+      }
+    }
+  }
+
+  # Update the interfaces hash
+  %{ $interfaces } = %nowInterfaces;
+
+  $output = $title . $output    if defined($output);
+
+  return $output;
+}
+
