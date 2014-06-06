@@ -10,7 +10,7 @@
       command: "/sbin/ip route del {{ iperf_multicast_imas_b }}/32 dev {{ device_imas_b }}"
       ignore_errors: yes
 
-    - name: desinstalar iperf
+    - name: Uninstall iperf
       yum: name=iperf state=removed
 
     - name: Delete iperf rpm

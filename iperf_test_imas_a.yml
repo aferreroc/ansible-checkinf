@@ -15,12 +15,8 @@
     - name: Delete iperf log imas_a
       file: path=/var/log/{{ iperf_service_name_imas_a }} state=absent
       notify:
-        - Reiniciar iperf imas_a
-
-  # post_tasks:
-  #   - name: Creates a Summary of logs
-  #     local_action: command ./parseresults_iperf.py -t imas_a -i fetched/iperf_imas_a_{{ mydate }} -o fetched/Summary_iperf_imas_a_{{ mydate }}.txt
+        - Restart iperf imas_a
 
   handlers:
-      - name: Reiniciar iperf imas_a
+      - name: Restart iperf imas_a
         service: name={{ iperf_service_name_imas_a }} state=restarted

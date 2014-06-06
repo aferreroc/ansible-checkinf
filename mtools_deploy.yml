@@ -2,12 +2,12 @@
 - hosts: all
   sudo: yes
   tasks:
-    - name: Comprobar con ping
+    - name: Check with ping
       action: ping
 
     - name: Copy mtools rpm
       copy: src=files/open-mtools-1.0-1.fc20.x86_64.rpm dest=/tmp/open-mtools-1.0-1.fc20.x86_64.rpm
-    
+
     - name: Install mtools rpm
       command: "/bin/rpm -Uvh /tmp/open-mtools-1.0-1.fc20.x86_64.rpm"
 
@@ -19,16 +19,16 @@
     - name: Add mtools daemon imas_a init.d eth0 script
       template: src=templates/init.d-mdump_imas_a.j2 dest=/etc/init.d/{{ mdump_service_name_imas_a }} mode=0751
       notify:
-        - Reiniciar mtools imas_a
+        - Restart mtools imas_a
 
-    - name: Añadir iperf daemon imas_b init.d eth1 script
+    - name: Add mtools daemon imas_b init.d eth1 script
       template: src=templates/init.d-mdump_imas_b.j2 dest=/etc/init.d/{{ mdump_service_name_imas_b }} mode=0751
       notify:
-        - Reiniciar mtools imas_b
+        - Restart mtools imas_b
 
   handlers:
-      - name: Reiniciar mtools imas_a
+      - name: Restart mtools imas_a
         service: name={{ mdump_service_name_imas_a }} state=restarted
 
-      - name: Reiniciar mtools imas_b
+      - name: Restart mtools imas_b
         service: name={{ mdump_service_name_imas_b }} state=restarted

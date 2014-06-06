@@ -2,10 +2,10 @@
 - hosts: all
   sudo: yes
   tasks:
-    - name: desinstalar mtools
+    - name: Uninstall mtools
       yum: name=open-mtools state=removed
 
-    - name: Delete iperf rpm
+    - name: Delete mtools rpm
       file: path=/tmp/open-mtools-1.0-1.fc20.x86_64.rpm state=absent
 
 - hosts: clients

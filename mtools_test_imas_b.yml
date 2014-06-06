@@ -9,17 +9,13 @@
 - hosts: clients
   sudo: Yes
   tasks:
-    - name: Fetch iperf log (local directory is fetched/mtools_date)
+    - name: Fetch mtools log (local directory is fetched/mtools_date)
       fetch: src=/var/log/{{ mdump_service_name_imas_b }} dest=fetched/mtools_imas_b_{{ mydate }}/imas_b_{{ ansible_hostname }} flat=yes
 
-    - name: Delete iperf log imas_b
+    - name: Delete mtools log imas_b
       file: path=/var/log/{{ mdump_service_name_imas_b }} state=absent
-      notify: Reiniciar mtools imas_b
-
-  # post_tasks:
-  #   - name: Create Summary of imas_b logs
-  #     local_action: command ./parseresults_mtools.py -t imas_b -i fetched/mtools_imas_b_{{ mydate }} -o fetched/Summary_mtools_imas_b_{{ mydate }}.txt
+      notify: Restart mtools imas_b
 
   handlers:
-    - name: Reiniciar mtools imas_b
+    - name: Restart mtools imas_b
       service: name={{ mdump_service_name_imas_b }} state=restarted
