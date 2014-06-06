@@ -1,0 +1,18 @@
+---
+- hosts: all
+  sudo: yes
+  tasks:
+    - name: Stop check_net_and_kill_if_many_drops
+      service: name=check_net_and_kill_if_many_drops state=stopped
+
+    - name: Delete check_net_and_kill_if_many_drops from init.d
+      file: path=/etc/init.d/check_net_and_kill_if_many_drops state=absent
+
+    - name: Delete check_net_and_kill_if_many_drops
+      file: path=/usr/local/bin/check_net_and_kill_if_many_drops state=absent
+
+    - name: Delete check_net_and_kill_if_many_drops.stderr
+      file: path=/usr/local/bin/check_net_and_kill_if_many_drops.stderr state=absent
+
+    - name: Delete check_net_and_kill_if_many_drops.stdout
+      file: path=/usr/local/bin/check_net_and_kill_if_many_drops.stdout state=absent
