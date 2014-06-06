@@ -1,11 +1,8 @@
 ---
 - hosts: server
-  pre_tasks:
-    - local_action: command export mydate=`date '+%F.%H:%M:%S'`
-
   tasks:
-    - debug: msg="{{ lookup('env','mydate') }}"
+    - shell: date
+      register: thedate
 
-- hosts: clients
-  tasks:
-    - debug: msg="{{ lookup('env','mydate') }} is a mydate environment variable"
+    - debug: msg=thedate
+
