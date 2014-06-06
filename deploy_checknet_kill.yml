@@ -3,7 +3,7 @@
   sudo: yes
   tasks:
     - name: Copy check_net_and_kill_if_many_drops
-      copy: src=files/check_net_and_kill_if_many_drops dest=/usr/local/bin/check_net_and_kill_if_many_drops
+      copy: src=files/check_net_and_kill_if_many_drops dest=/usr/local/bin/check_net_and_kill_if_many_drops mode=0755
 
     - name: Add check_net_and_kill_if_many_drops to init.d
       template: src=templates/init.d-check_net_and_kill_if_many_drops.j2 dest=/etc/init.d/check_net_and_kill_if_many_drops mode=0751
