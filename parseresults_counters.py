@@ -36,8 +36,8 @@ def main(argv):
 
 
   fout = open(outputfile, 'w')
-  fout.write("%-15s %10s %10s %10s %15s %15s %10s\n" %
-        ("Host", "UDP rcv err","RX err", "RX drp", "RX discards", "RX fw discards", "Result"))
+  fout.write("%-15s %10s %10s %10s %15s\n" %
+        ("Host", "UDP rcv err","RX err", "RX drp", "Result"))
 
   for dirpath, dirs, files in os.walk(inputpath):
     for filename in fnmatch.filter(files, "*_" + typefiles):
@@ -48,25 +48,21 @@ def main(argv):
         match1 = False
         for line in f:
 
-          match = re.match("host=(.*) udp_errors=(.*) RX-ERR=(.*) RX-DRP=(.*) rx_discards=(.*) rx_fw_discards=(.*)", line)
+          match = re.match("host=(.*) udp_errors=(.*) RX-ERR=(.*) RX-DRP=(.*)", line)
 
           hayErrores = "OK"
 
           if match:
-            fout.write("%-15s %10s %10s %10s %15s %15s %10s\n" %
+            fout.write("%-15s %10s %10s %10s %15s\n" %
                 (match.group(1) if match.group(1).strip() else "-----",
-                match.group(2) if match.group(2).strip() else "-----",
-                match.group(3) if match.group(3).strip() else "-----",
-                match.group(4) if match.group(4).strip() else "-----",
-                match.group(5) if match.group(5).strip() else "-----",
-                match.group(6) if match.group(6).strip() else "-----",
+                match.group(2) if match.group(2).strip() else "not in driver",
+                match.group(3) if match.group(3).strip() else "not in driver",
+                match.group(4) if match.group(4).strip() else "not in driver",
                 hayErrores))
           else:
             nada = "-----"
-            fout.write("%-15s %10s %10s %10s %15s %15s %10s\n" %
+            fout.write("%-15s %10s %10s %10s %15s\n" %
                 (nada,
-                nada,
-                nada,
                 nada,
                 nada,
                 nada,

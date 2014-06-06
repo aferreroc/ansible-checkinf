@@ -33,8 +33,8 @@ def main(argv):
 
 
   fout = open(outputfile, 'w')
-  fout.write("%-15s %10s %15s %10s %15s %15s %10s\n" %
-        ("Host", "RX set","driver", "version", "firmware-version", "bus-info", "rx-usecs"))
+  fout.write("%-15s %10s %15s %15s %15s %15s %15s %15s %15s\n" %
+        ("Host", "RX Ring Buff","driver", "driver-ver", "firmware-ver", "bus-info", "Coalescing RX", "RX disc", "RX fw disc"))
 
   for dirpath, dirs, files in os.walk(inputpath):
     for filename in fnmatch.filter(files, "*_" + typefiles):
@@ -45,23 +45,28 @@ def main(argv):
         match1 = False
         for line in f:
 
-          match = re.match("host=(.*) RX=(.*) driver=(.*) version=(.*) firmware-version=(.*) bus-info=(.*) rx-usecs=(.*)", line)
+          match = re.match("host=(.*) RX=(.*) driver=(.*) version=(.*) firmware-version=(.*) bus-info=(.*) rx-usecs=(.*) rx_discards=(.*) rx_fw_discards=(.*)",
+                  line)
 
           hayErrores = "OK"
 
           if match:
-            fout.write("%-15s %10s %15s %10s %15s %15s %10s\n" %
+            fout.write("%-15s %10s %15s %15s %15s %15s %15s %15s %15s\n" %
                 (match.group(1) if match.group(1).strip() else "-----",
                 match.group(2) if match.group(2).strip() else "-----",
                 match.group(3) if match.group(3).strip() else "-----",
                 match.group(4) if match.group(4).strip() else "-----",
                 match.group(5) if match.group(5).strip() else "-----",
                 match.group(6) if match.group(6).strip() else "-----",
-                match.group(7) if match.group(6).strip() else "-----"))
+                match.group(7) if match.group(7).strip() else "-----",
+                match.group(8) if match.group(8).strip() else "-----",
+                match.group(9) if match.group(9).strip() else "-----"))
           else:
             nada = "-----"
-            fout.write("%-15s %10s %15s %10s %15s %15s %10s\n" %
+            fout.write("%-15s %10s %15s %15s %15s %15s %15s %15s %15s\n" %
                 (nada,
+                nada,
+                nada,
                 nada,
                 nada,
                 nada,
