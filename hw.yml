@@ -2,7 +2,7 @@
 #<nombre_maquina>        <Ring_buffer>(punto 4)  <Interrupt Coalescense: rx_usecs>(punto 6)       <Driver y Versión>(punto 5)     <Firmware Version>(punto 5)     <Bus_info_ID>(punto 5)
 
 ---
-- hosts: clients
+- hosts: all
   sudo: Yes
   tasks:
     - name: Execute ethtool -g
@@ -26,7 +26,15 @@
       shell: ethtool -c eth1|awk '
           BEGIN {a=" "}
           /rx-usecs:/ {a=$2};
-          END {printf "rx-usecs=%s\n",a}
+          END {printf "rx-usecs=%s ",a}
+        ' >> /var/log/hw_{{ iface }}
+
+    - name: Execute netsat -Iiface
+      shell: ethtool -S {{ iface }} | awk '
+          BEGIN {a=b=" "}
+          /rx_discards/ {a=$2}
+          /rx_fw_discards/ {b=$2};
+          END {printf "rx_discards=%s rx_fw_discards=%s\n",a,b}
         ' >> /var/log/hw_{{ iface }}
 
     - name: Fetch summary data to local directory
@@ -35,6 +43,4 @@
     - name: Delete remote sumary data
       file: path=/var/log/hw_{{ iface }} state=absent
 
-  # post_tasks:
-  #   - name: Create Summary of counters logs
-  #     local_action: command ./parseresults_hw.py -i fetched/hw_{{ mydate }} -o fetched/Summary_HW_{{ mydate }}_{{ iface }}.txt
+  
