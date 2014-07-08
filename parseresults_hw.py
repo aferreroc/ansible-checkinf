@@ -33,8 +33,8 @@ def main(argv):
 
 
   fout = open(outputfile, 'w')
-  fout.write("%-15s %10s %15s %15s %15s %15s %15s %15s %15s\n" %
-        ("Host", "RX Ring Buff","driver", "driver-ver", "firmware-ver", "bus-info", "Coalescing RX", "RX disc", "RX fw disc"))
+  fout.write("%-15s %10s %15s %15s %15s %15s %15s %15s %15s %15s %25s\n" %
+        ("Host", "RX Ring Buff","driver", "driver-ver", "firmware-ver", "bus-info", "Coalescing RX", "RX disc", "RX fw disc", "pci_nomsi", "pcie_aspm_policy"))
 
   for dirpath, dirs, files in os.walk(inputpath):
     for filename in fnmatch.filter(files, "*_" + typefiles):
