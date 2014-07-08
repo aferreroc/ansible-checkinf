@@ -1,8 +1,0 @@
----
-- hosts: server
-  tasks:
-    - shell: date
-      register: thedate
-
-    - debug: msg=thedate
-

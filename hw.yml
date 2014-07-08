@@ -37,10 +37,19 @@
           END {printf "rx_discards=%s rx_fw_discards=%s\n",a,b}
         ' >> /var/log/hw_{{ iface }}
 
+    - name: Check pci=nomsi inside /boot/grub/grub.conf
+      shell: cat /boot/grub/grub.conf | awk '
+          BEGIN {COUNT=COUNTOK=0}
+          NF && !/^($|[:space:]*#)/ && /[:space:]*kernel/ {COUNT++};
+          NF && !/^($|[:space:]*#)/ && /[:space:]*kernel.*pci=nomsi/ {COUNTOK++};
+          END {if (COUNT == COUNTOK) print "pci_nomsi=OK"; else print "pci_nomsi=NOK"}
+        ' >> /var/log/hw_{{ iface }}
+
+    - name: Check pci=nomsi inside /boot/grub/grub.conf
+      shell: echo "pcie_aspm_policy=$(cat /sys/module/pcie_aspm/parameters/policy)" >> /var/log/hw_{{ iface }}
+
     - name: Fetch summary data to local directory
       fetch: src=/var/log/hw_{{ iface }} dest=fetched/hw_{{ mydate }}/{{ ansible_hostname }}_{{ iface }} flat=yes
 
     - name: Delete remote sumary data
       file: path=/var/log/hw_{{ iface }} state=absent
-
-  
